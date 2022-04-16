@@ -140,7 +140,7 @@ int char2str(unsigned char *encode_text, int size, char* result){
             result[i * 8 / 4 + j] = 'g';
         }
     }
-    result[8 / 4 * size + 1] = 0;
+    result[8 / 4 * size] = 0;
     return 8 / 4 * size + 1;
 }
 class BytesBase{
