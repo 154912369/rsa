@@ -51,6 +51,61 @@ bool minus_bit(unsigned char* a,unsigned char *b){
     return add;
 }
 
+bool multiply_bit(unsigned char* a,unsigned char *b, unsigned char*ans){
+    bool a_flat[BYTESIZE*8];
+    bool b_flat[BYTESIZE*8];
+    for(int i=0;i<BYTESIZE*8;i++){
+        int first =i/8;
+        int second =(1<<(i%8));
+        if(a[first]&second){
+            a_flat[i]=true;
+        }else{
+            a_flat[i]=false;
+        }
+        if(b[first]&second){
+            b_flat[i]=true;
+        }else{
+            b_flat[i]=false;
+        }
+
+    }
+    int first=0;
+    int second=0;
+    int number = 1;
+    unsigned char bias[BYTESIZE]={0};
+    while(first<BYTESIZE){
+        bias[first]=(1<<second);
+        for(int i=0;i<number;i++){
+            if(a_flat[i]&&b_flat[number-1-i]){
+                if(add_bit(ans, bias)){
+                    return true;
+                }
+            }
+        }
+        second+=1;
+        number+=1;
+        if(second==8){
+            bias[first]=0;
+            second = 0;
+            first+=1;
+            if(first<BYTESIZE){
+                bias[first]=1;
+            }
+        }
+    }
+    int start =1;
+    while (number<2*BYTESIZE*8) {
+        for(int i=start;i<number;i++){
+            if(a_flat[i]&&b_flat[number-1-i]){
+                return true;
+            }
+        }
+        number+=1;
+    }
+    
+    return false;
+}
+
 bool compare(const unsigned char* data, const unsigned char* bytes){
     for (int i = BYTESIZE-1; i >= 0; i--){
         if(data[i]>bytes[i]){
