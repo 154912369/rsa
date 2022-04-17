@@ -2,7 +2,7 @@
 #include <iostream>
 #include<cmath>
 
-#define BASETYPE unsigned short
+#define BASETYPE unsigned char
 #define BYTESIZE 128/sizeof(BASETYPE)/8
 
 template<typename T>
@@ -51,7 +51,7 @@ bool char_self_add(T& a, T b, bool add){
     while(b){
         tmp = b;
         b &= a;
-        if(b >= (1<<(sizeof(T)*8-1))){
+        if(b >>(sizeof(T)*8-1)){
             overflow = true;
         }
         b <<= 1;
@@ -62,7 +62,7 @@ bool char_self_add(T& a, T b, bool add){
         while(b){
             tmp = b;
             b &= a;
-            if(b >= (1<<(sizeof(T)*8-1))){
+            if(b >>(sizeof(T)*8-1)){
                 overflow = true;
             }
             b <<=  1;
