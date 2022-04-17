@@ -2,7 +2,7 @@
 #include <iostream>
 #include<cmath>
 
-#define BASETYPE unsigned char
+#define BASETYPE unsigned short
 #define BYTESIZE 128/sizeof(BASETYPE)/8
 
 template<typename T>
@@ -46,6 +46,18 @@ bool equal_zero(const T* data){
 
 template<typename T>
 bool char_self_add(T& a, T b, bool add){
+  a+=b;
+  if(add){
+     a+=1;
+    return a<=b;
+   }
+    else{
+	return a<b; 
+   }  
+}
+
+template<typename T>
+bool har_self_add(T& a, T b, bool add){
     bool overflow = false;
    T tmp = 0;
     while(b){
