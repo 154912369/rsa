@@ -218,6 +218,7 @@ multiply_bit(T* a,T *b, T*ans){
                 if(add_bit(ans, bias)){
                     return true;
                 }
+            }
         }
         second+=1;
         number+=1;
