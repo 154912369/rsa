@@ -2,7 +2,7 @@
 #include <iostream>
 #include<cmath>
 
-#define BASETYPE unsigned short
+#define BASETYPE unsigned int
 #define BYTESIZE 128/sizeof(BASETYPE)/8
 
 template<typename T>
@@ -109,8 +109,8 @@ int log2(T* a){
     int second =0;
     while (size==0&&start>=0){
         first=start&(8*sizeof(T)-1);
-        second = start>>(sizeof(T)+2);
-        if(a[second]&(1<<first)){
+        second = start/(sizeof(T)*8);
+        if(a[second]&(((T)1)<<first)){
             return start;
         }
         start-=1;
@@ -120,7 +120,7 @@ int log2(T* a){
 
 template<typename T>
 void left_bit(T* a,int size){
-    int pre_fist=(BYTESIZE-1-(size>>(sizeof(T)+2)));
+    int pre_fist=(BYTESIZE-1-(size/(sizeof(T)*8)));
     int pre_bias =(size&(8*sizeof(T)-1));
     T pre=0;
     for(int i=BYTESIZE-1;i>=0;i--){
@@ -137,7 +137,7 @@ void left_bit(T* a,int size){
 
 template<typename T>
 void right_bit(T* a,int size){
-    int pre_fist=(size>>(sizeof(T)+2));
+    int pre_fist=(size/(sizeof(T)*8));
     int pre_bias =(size&(8*sizeof(T)-1));
     T pre=0;
     for(int i=0;i<BYTESIZE;i++){
@@ -160,12 +160,19 @@ bool divide_bit(T* a,T *b,T *redis){
         bias[i]=b[i];
     }
     int size = log2(a)-log2(b);
+    if(size<0){
+        for(int i=0;i<BYTESIZE;i++){
+            redis[i]=a[i];
+            a[i]=0;
+        }
+        return true;
+    }
     left_bit(bias,size);
 
     while(!compare(b,a)){
         
         if(!compare(bias,a)){
-            ans[size>>(sizeof(T)+2)]+=(1<<(size&(8*sizeof(T)-1)));
+            ans[size/(sizeof(T)*8)]+=(((T)1)<<(size&(8*sizeof(T)-1)));
             minus_bit(a,bias);
         }
         right_bit(bias,1);
@@ -183,33 +190,34 @@ bool
 multiply_bit(T* a,T *b, T*ans){
     bool a_flat[BYTESIZE*8*sizeof(T)];
     bool b_flat[BYTESIZE*8*sizeof(T)];
-    for(int i=0;i<BYTESIZE*8*sizeof(T);i++){
-        int first =i>>(sizeof(T)+2);
-        int second =(1<<(i&(8*sizeof(T)-1)));
-        if(a[first]&second){
+    for(T i=0;i<BYTESIZE*8*sizeof(T);i++){
+        T first =i/(sizeof(T)*8);
+        T second =i&(8*sizeof(T)-1);
+        if((a[first]>>second)&1){
             a_flat[i]=true;
         }else{
             a_flat[i]=false;
         }
-        if(b[first]&second){
+        if((b[first]>>second)&1){
             b_flat[i]=true;
         }else{
             b_flat[i]=false;
         }
 
     }
-    int first=0;
-    int second=0;
-    int number = 1;
+    T  first=0;
+    T second=0;
+    T number = 1;
     T bias[BYTESIZE]={0};
+    T tmpve[BYTESIZE]={0};
+    tmpve[BYTESIZE-1]=12;
     while(first<BYTESIZE){
-        bias[first]=(1<<second);
-        for(int i=0;i<number;i++){
+        bias[first]=(((T)1)<<second);
+        for(T i=0;i<number;i++){
             if(a_flat[i]&&b_flat[number-1-i]){
                 if(add_bit(ans, bias)){
                     return true;
                 }
-            }
         }
         second+=1;
         number+=1;
@@ -222,9 +230,9 @@ multiply_bit(T* a,T *b, T*ans){
             }
         }
     }
-    int start =1;
+    T start =1;
     while (number<2*BYTESIZE*8*sizeof(T)) {
-        for(int i=start;i<number;i++){
+        for(T i=start;i<number;i++){
             if(a_flat[i]&&b_flat[number-1-i]){
                 return true;
             }
@@ -329,10 +337,10 @@ bool int2bi(int a, T* result){
     int i = 0;
     while (i<BYTESIZE*8*sizeof(T) &&  a)
     {
-        int first = (i>>(sizeof(T)+2));
+        int first = (i/(sizeof(T)*8));
         int second = (i&(8*sizeof(T)-1));
         if((a&1) == 1){
-            result[first] |= (1 << second);
+            result[first] |= (((T)1) << second);
         }
         i += 1;
         a /= 2;
@@ -427,7 +435,7 @@ public:
                     _base[(i * 8*sizeof(T) + j) * BYTESIZE + t] = tmp_base[t];
                 }
                 if(i<BYTESIZE){
-                    if((_base[(i * 8*sizeof(T) + j) * BYTESIZE+i]&(1<<j))==0){
+                    if(((_base[(i * 8*sizeof(T) + j) * BYTESIZE+i]>>j)&1)==0){
                         if(_large_index>i * 8*sizeof(T) + j){
                             _large_index = i * 8*sizeof(T) + j;
                         }
@@ -447,9 +455,9 @@ public:
                     }
                     for (int s = 0; s < BYTESIZE; s++){
                         if(s==h){
-                            tmp_base[s]=((1<<k) - 1);
+                            tmp_base[s]=((((T)1)<<k) - 1);
                         }else if(s<h) {
-                            tmp_base[s]=((1<<(8*sizeof(T))) - 1);
+                            tmp_base[s]=(~((T)0));
                         }else{
                             tmp_base[s] = 0;
                         }
@@ -480,7 +488,7 @@ public:
         bool change =false;
         for (int i = 0; i < BYTESIZE; i++){
             for (int j = 0; j < 8*sizeof(T);j++){
-                if(bytes[i] & (1 << j)){
+                if(bytes[i] & (((T)1) << j)){
                     add_bit(tmp_ans, _base+((i*8*sizeof(T)+j)*BYTESIZE));
 
                     if(8 * i*sizeof(T) + j >= _large_index){
@@ -524,9 +532,9 @@ public:
         int size = log2(exp)+1;
         while (index < size)
         {
-            first = (index>>(sizeof(T)+2));
+            first = (index/(sizeof(T)*8));
             second = (index&(8*sizeof(T)-1));
-            if(exp[first]&1<<second){
+            if(exp[first]&(((T)1)<<second)){
                 multiply(ans, tmp_ans, ans);
             }
             index += 1;
@@ -539,8 +547,8 @@ public:
         bool a_flat[BYTESIZE*8*sizeof(T)];
         bool b_flat[BYTESIZE*8*sizeof(T)];
         for(int i=0;i<BYTESIZE*8*sizeof(T);i++){
-            int first =(i>>(sizeof(T)+2));
-            int second =(1<<(i&(8*sizeof(T)-1)));
+            int first =(i/(sizeof(T)*8));
+            T second =(((T)1)<<(i&(8*sizeof(T)-1)));
             if(a[first]&second){
                 a_flat[i]=true;
             }else{
@@ -593,7 +601,7 @@ class Encrpyt{
             multiply_bit(tmp2,tmp3,tmp);
             _base_n = BytesBase<T>(tmp);
             for (int i = 0;i<BYTESIZE; i++){
-                if((tmp[i]&((8<<1)-1))){
+                if(tmp[i]){
                     _size = i;
                 }
             }
